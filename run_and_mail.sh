@@ -1,36 +1,31 @@
 #!/bin/sh
+# ... (Bloque de configuración de variables SMTP)
 
-# 1. Definir variables de entorno de Coolify
-SMTP_USER=${SMTP_USER:?"Debe definir SMTP_USER en Coolify"}
-SMTP_PASSWORD=${SMTP_PASSWORD:?"Debe definir SMTP_PASSWORD en Coolify"}
-DESTINATION_EMAIL=${DESTINATION_EMAIL:?"Debe definir DESTINATION_EMAIL en Coolify"}
-
-# 2. Configurar SSMTP para el envío de correo (usando las variables secretas)
-cat > /etc/ssmtp/ssmtp.conf << EOF
-root=$SMTP_USER
-mailhub=$SMTP_HOST:$SMTP_PORT
-AuthUser=$SMTP_USER
-AuthPass=$SMTP_PASSWORD
-UseSTARTTLS=Yes
-UseTLS=Yes
-hostname=$SMTP_HOST
-FromLineOverride=yes
-EOF
-
-# 3. Ejecutar Newman
-# Línea CRÍTICA: Se agrega la bandera --ignore-failures al final
+# 3. Ejecutar Newman (SIN la bandera "--ignore-failures" o "--suppress-exit-code")
+# Si las pruebas fallan, Newman saldrá con código 1, pero el reporte se debería generar.
 newman run SoapaCollection.json \
     -e SIOX_environment.json \
     --iteration-data cuentas.csv \
     --reporters cli,html \
     --reporter-html-export reportes/reporte.html \
-    --suppress-exit-code
 
-# 4. Empaquetar el reporte HTML
-tar -czf reporte.tar.gz reportes/reporte.html
+# 4. Verificar si el reporte existe antes de intentar comprimirlo y enviarlo
+if [ -f "reportes/reporte.html" ]; then
+    tar -czf reporte.tar.gz reportes/reporte.html
 
-# 5. Enviar el correo electrónico
-echo "El Job de Newman ha finalizado. Adjunto informe." | mailx \
+    # 5. Enviar el correo electrónico
+    echo "El Job de Newman ha finalizado. Adjunto informe." | mailx \
+        -s "Reporte de Pruebas Newman | $(date +%Y%m%d)" \
+        -a reporte.tar.gz \
+        -r "Newman Job <$SMTP_USER>" \
+        "$DESTINATION_EMAIL"
+else
+    # Si Newman falla en generar el reporte, enviaremos un correo de aviso sin adjunto
+    echo "El Job de Newman falló en generar el reporte. Revisar logs." | mailx \
+        -s "FALLO CRÍTICO Newman Job | $(date +%Y%m%d)" \
+        -r "Newman Job <$SMTP_USER>" \
+        "$DESTINATION_EMAIL"
+fi
     -s "Reporte de Pruebas Newman | $(date +%Y%m%d)" \
     -a reporte.tar.gz \
     -r "Newman Job <$SMTP_USER>" \
