@@ -24,7 +24,7 @@ newman run SoapaCollection.json \
     --iteration-data cuentas.csv \
     --reporters cli,html \
     --reporter-html-export reportes/reporte.html \
-    --ignore-failures
+    --suppress-exit-code
 
 # 4. Empaquetar el reporte HTML
 tar -czf reporte.tar.gz reportes/reporte.html
