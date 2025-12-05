@@ -4,6 +4,7 @@ WORKDIR /etc/newman
 
 # 1. Instalar dependencias de correo, ssmtp y openssl para SSL/TLS
 # Ya no incluimos 'mailutils'
+# En el Dockerfile:
 RUN apk update && \
     apk add --no-cache ssmtp openssl tar gzip mailx && \
     rm -rf /var/cache/apk/*
