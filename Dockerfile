@@ -8,4 +8,4 @@ RUN mkdir -p reportes
 COPY . .
 
 # Se ejecuta Newman
-ENTRYPOINT ["newman", "run", "SoapaCollection.json", "-e", "SIOX_environment.json", "--iteration-data", "cuentas.csv", "--reporters", "cli,html", "--reporter-html-export", "reporte.html"]
+ENTRYPOINT ["newman", "run", "SoapaCollection.json", "-e", "SIOX_environment.json", "--iteration-data", "cuentas.csv", "--reporters", "cli,html", "--reporter-html-export", "reportes/reporte.html"]
