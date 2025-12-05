@@ -2,10 +2,15 @@ FROM postman/newman:5-alpine
 
 WORKDIR /etc/newman
 
-# PASO CLAVE: Crear el directorio de reportes para que Newman pueda escribir.
-RUN mkdir -p reportes
+# Instalamos ssmtp (el cliente de correo) y mailx (la interfaz de envío)
+# junto con tar y gzip (para adjuntar archivos)
+RUN apk update && \
+    apk add --no-cache ssmtp mailx tar gzip && \
+    mkdir -p reportes && \
+    rm -rf /var/cache/apk/*
 
+# Copiamos todos los archivos del repo (incluyendo colecciones y el nuevo script)
 COPY . .
 
-# Se ejecuta Newman
-ENTRYPOINT ["newman", "run", "SoapaCollection.json", "-e", "SIOX_environment.json", "--iteration-data", "cuentas.csv", "--reporters", "cli,html", "--reporter-html-export", "reportes/reporte.html"]
+# Usamos el script para la ejecución
+ENTRYPOINT ["/bin/sh", "run_and_mail.sh"]
